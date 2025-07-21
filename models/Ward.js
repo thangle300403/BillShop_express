@@ -13,7 +13,6 @@ class Ward extends Base {
     getDistrict = async () => {
         const district = await districtModel.find(this.district_id);
         return district;
-
     }
 
     getByDistrictId = async (district_id) => {

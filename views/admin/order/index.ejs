@@ -34,7 +34,6 @@
                  <th>Ngày giao hàng</th>
                  <th></th>
                  <th></th>
-                 <th></th>
                </tr>
              </thead>
              <tbody>
@@ -135,10 +134,24 @@
              </label>
              <% } %>
            </div>
+
+           <!-- Reason dropdown - show only if cancel selected -->
+           <div id="cancel-reason-container" style="display: none; margin-top: 1em;">
+             <label for="cancel_reason"><strong>Lý do hủy đơn:</strong></label>
+             <select name="cancel_reason" class="form-control">
+               <option value="stock_error">Hết hàng</option>
+               <option value="payment_timeout">Chưa thanh toán</option>
+               <option value="customer_request">Khách yêu cầu huỷ</option>
+               <option value="fraud_detected">Phát hiện gian lận</option>
+               <option value="shipping_issue">Vấn đề giao hàng</option>
+               <option value="product_issue">Hàng có vấn đề trong lúc thử nghiệm</option>
+               <option value="other">Khác</option>
+             </select>
+           </div>
          </div>
          <div class="modal-footer">
            <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
-           <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button> <!-- Change to type="submit" -->
+           <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button>
          </div>
        </form>
 
@@ -169,3 +182,12 @@
      </div>
    </div>
  </div>
+
+ <script>
+   document.querySelectorAll('input[name="order_status"]').forEach(radio => {
+     radio.addEventListener('change', function() {
+       const cancelReason = document.getElementById('cancel-reason-container');
+       cancelReason.style.display = this.value === '6' ? 'block' : 'none';
+     });
+   });
+ </script>

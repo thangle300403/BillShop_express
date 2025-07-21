@@ -23,6 +23,8 @@
   <!-- favicon delete -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     /* Đoạn code CSS quay icon */
     .nav-sidebar .menu-is-opening>.nav-link i.right,
@@ -53,6 +55,8 @@
     }
   </style>
 </head>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">
   <div class="wrapper">
@@ -99,6 +103,13 @@
         <!-- Sidebar Menu -->
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <li class="nav-item">
+              <a href="/admin/revenue" class="nav-link <%= currentRoute == 'revenue' ? 'active' : '' %>">
+                <i class="nav-icon fas fa-money-bill-wave"></i> <!-- Updated icon for Transport Cost -->
+                <p>Quản lí doanh thu</p> <!-- Translated label -->
+              </a>
+            </li>
+
             <!-- Quản lý Sản phẩm -->
             <li class="nav-item">
               <a href="/admin" class="nav-link <%= currentRoute == 'admin' ? 'active' : '' %>">
@@ -181,7 +192,6 @@
                 <p>Chi phí Vận chuyển</p> <!-- Translated label -->
               </a>
             </li>
-
           </ul>
         </nav>
 

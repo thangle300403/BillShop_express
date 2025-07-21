@@ -4,6 +4,7 @@ const session = require('express-session');
 
 class HomeController {
     static index = async (req, res) => {
+
         try {
             const page = 1;
             const item_per_page = 4;

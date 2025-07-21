@@ -55,6 +55,5 @@ router.post('/customer/updateShippingDefault', CustomerController.updateShipping
 router.post('/customer/updatePassword', CustomerController.updatePassword);
 router.post('/thanh-toan.html', PaymentController.order);
 router.post('/comments', ProductController.storeComment); //lưu đánh giá
-router.post('/trai-nghiem-ao.html', VRController.startSegmentation);
 
 module.exports = router;

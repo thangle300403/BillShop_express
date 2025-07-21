@@ -4,6 +4,25 @@ class Customer extends Base {
     TABLE_NAME = 'customer';
     SELECT_ALL_QUERY = `SELECT * FROM ${this.TABLE_NAME}`;
 
+    getById = async (id) => {
+        try {
+            const [rows] = await pool.execute(
+                `${this.SELECT_ALL_QUERY} WHERE ${this.TABLE_NAME}.id=?`,
+                [id]
+            );
+
+            if (rows.length === 0) {
+                return null;
+            }
+
+            const row = rows[0];
+            const object = this.convertRowToObject(row);
+            return object;
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
     convertRowToObject = (row) => {
         const object = new Customer(row);
         return object;
@@ -29,7 +48,7 @@ class Customer extends Base {
         }
         let condition = null;
         if (Object.keys(array_conds).length) {
-            condition = temp.join(" AND ");
+            condition = temp.join(" OR ");
         }
         temp = [];
         for (let key in array_sorts) {

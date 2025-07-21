@@ -6,7 +6,6 @@ const wardModel = require('../models/Ward');
 const transportModel = require('../models/Transport');
 const orderModel = require('../models/Order');
 const orderItemModel = require('../models/OrderItem');
-
 class PaymentController {
     static checkout = async (req, res) => {
         try {
@@ -19,8 +18,6 @@ class PaymentController {
             // support 2 trường hợp, đã login và chưa login
             const email = req.session.email;
             const customer = await customerModel.findEmail(email);
-            // console.log(customer);
-            // console.log(cart);
             const provinces = await provinceModel.all();
             const selected_ward_id = customer.ward_id;
             // Cần danh sách quận huyện và phường xã, danh tỉnh thành đã có ở trên
@@ -36,7 +33,7 @@ class PaymentController {
 
                 const selected_district = await districtModel.find(selected_district_id);
                 selected_province_id = selected_district.province_id;
-                districts = await districtModel.getByProvinceId_checkout(selected_province_id);
+                districts = await districtModel.getByProvinceId(selected_province_id);
 
                 // Tìm phí giao hàng dựa vào mã tỉnh thành
                 const transportModel = require('../models/Transport');

@@ -10,6 +10,12 @@ exports.formatMoney = money => {
     return numeral(money).format('0,0');
 }
 
+exports.formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+});
+
 exports.genRouteCategory = category => {
     const slug = slugify(category.name, {
         lower: true
@@ -110,6 +116,9 @@ exports.getCurrentRoute = path => {
     if (path.match(/^admin\/transport/)) {
         return 'transport';
     }
+    if (path.match(/^admin\/revenue/)) {
+        return 'revenue';
+    }
 }
 exports.sendEmail = async (to, subject, content) => {
     const nodemailer = require("nodemailer");
@@ -119,13 +128,13 @@ exports.sendEmail = async (to, subject, content) => {
         port: 587,
         secure: false, // Use `true` for port 465, `false` for all other ports
         auth: {
-            user: process.env.STMP_USERNAME,
+            user: process.env.SMTP_USERNAME,
             pass: process.env.SMTP_SECRET,
         },
     });
     try {
         await transporter.sendMail({
-            from: process.env.STMP_USERNAME, // sender address
+            from: process.env.SMTP_USERNAME, // sender address
             to: to, // list of receivers
             subject: subject, // Subject line
             html: content, // html body
@@ -135,15 +144,18 @@ exports.sendEmail = async (to, subject, content) => {
         throw error;
     }
 }
+
 exports.genRouteOrderDetail = order => {
     return `/chi-tiet-don-hang-${order.id}.html`;
 }
+
 exports.genRouteProductDetail = product => {
     const slug = slugify(product.name, {
         lower: true
     });
     return `/san-pham/${slug}-${product.id}.html`;
 }
+
 exports.santitizeData = data => {
     const createDOMPurify = require('dompurify');
     const { JSDOM } = require('jsdom');

@@ -14,6 +14,15 @@ class Product extends Base {
         return object;
     }
 
+    getAll = async () => {
+        try {
+            const [rows] = await pool.execute(`${this.SELECT_ALL_QUERY}`);
+            return rows;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
     // array_conds: lấy sản phẩm dựa theo cột
     // array_sorts: sắp xếp tăng hay giảm
     // page: trang thứ mấy
@@ -105,5 +114,21 @@ class Product extends Base {
         }
     };
 
+    decreaseQty = async (productId, qty) => {
+        await pool.execute(`UPDATE ${this.TABLE_NAME} SET inventory_qty = inventory_qty - ? WHERE id = ?`, [qty, productId]);
+    };
+
+    increaseQty = async (productId, qty) => {
+        await pool.execute(`UPDATE ${this.TABLE_NAME} SET inventory_qty = inventory_qty + ? WHERE id = ?`, [qty, productId]);
+    };
+
+    getShirt = async () => {
+        try {
+            const [rows] = await pool.execute(`${this.SELECT_ALL_QUERY} WHERE view_product.category_id=2`);
+            return rows;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
 }
 module.exports = new Product();

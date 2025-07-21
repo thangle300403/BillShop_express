@@ -7,6 +7,7 @@ class Base {
             this[field] = data[field];
         }
     }
+
     buildLimit = (page = null, item_per_page = null) => {
         let limit = '';
         if (page && item_per_page) {
@@ -125,18 +126,28 @@ class Base {
             const cols = [];
             const values = [];
             for (const key in data) {
-                cols.push(`${key}=?`);
-                values.push(data[key]);
+                // Ensure only valid fields are added
+                if (data[key] !== undefined) {
+                    cols.push(`${key}=?`);
+                    values.push(data[key]);
+                }
             }
-            values.push(id); // Add the id to the end of the values array
-            await pool.execute(`UPDATE \`${this.TABLE_NAME}\` SET ${cols.join(',')} WHERE id=?`, values);
+
+            // Ensure at least one field to update
+            if (cols.length === 0) {
+                throw new Error('No fields to update. Ensure the data object contains valid fields.');
+            }
+
+            values.push(id); // Add the ID to the end of the values array
+
+            const query = `UPDATE \`${this.TABLE_NAME}\` SET ${cols.join(', ')} WHERE id=?`;
+
+            await pool.execute(query, values);
             return true;
         } catch (error) {
             throw new Error(error.message);
         }
-
     };
-
 }
 
 module.exports = Base;

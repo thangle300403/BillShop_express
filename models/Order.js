@@ -87,7 +87,6 @@ class Order extends Base {
         catch (error) {
             throw new Error(error);
         }
-
     }
 
     getOrderItems = async () => {

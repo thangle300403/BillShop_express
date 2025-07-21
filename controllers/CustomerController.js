@@ -118,64 +118,81 @@ class CustomerController {
 
     // cập nhật thông tin tài khoản
     static updateInfo = async (req, res) => {
-        // trycatch
         try {
             const customer = await customerModel.findEmail(req.session.email);
-            // cập nhật name và mobile
-            customer.name = req.body.fullname;
-            customer.mobile = req.body.mobile;
+
+            // Update fields
+            customer.name = req.body.fullname || customer.name;
+            customer.mobile = req.body.mobile || customer.mobile;
+
             if (req.body.current_password && req.body.password) {
-                //kiểm tra mật khẩu hiện tại trong database đúng không?
                 if (!bcrypt.compareSync(req.body.current_password, customer.password)) {
                     req.session.message_error = 'Lỗi: Sai mật khẩu';
-                    req.session.save(() => {
-                        res.redirect('/thong-tin-tai-khoan.html');
-                    });
+                    req.session.save(() => res.redirect('/thong-tin-tai-khoan.html'));
                     return;
                 }
-                //kiểm tra mật khẩu hiện tại thành công
-                // mã hóa mật khẩu mới
-                // độ khó của mật khẩu
+
+                // Hash the new password
                 const saltRounds = 10;
                 const salt = bcrypt.genSaltSync(saltRounds);
-                const new_password_hash = bcrypt.hashSync(req.body.password, salt);
-                customer.password = new_password_hash;
+                customer.password = bcrypt.hashSync(req.body.password, salt);
             }
-            await customer.update();
+
+            // Prepare update data
+            const updateData = {
+                name: customer.name,
+                mobile: customer.mobile,
+                password: customer.password || null, // Include only if updated
+            };
+            // Update in database
+            await customer.update(customer.id, updateData);
+
+            // Update session and redirect
             req.session.message_success = 'Đã cập nhật thông tin tài khoản thành công';
-            // lưu session xuống file và điều hướng đến trang thông tin tài khoản
-            // phải cập nhật session.name
-            req.session.name = req.body.fullname;
-            req.session.save(() => {
-                res.redirect('/thong-tin-tai-khoan.html');
-            })
-
+            req.session.name = req.body.fullname; // Update session name
+            req.session.save(() => res.redirect('/thong-tin-tai-khoan.html'));
         } catch (error) {
-            // 500 là lỗi internal server (lỗi xãy ra ở server)
-            console.log(error);//dành cho dev xem
-            res.status(500).send(error.message);//cho người dùng xem
+            console.error('Error updating customer info:', error.message);
+            res.status(500).send(error.message); // Send error to user
         }
-
-    }
+    };
 
     static updateShippingDefault = async (req, res) => {
-        // lấy customer từ database
-        const email = req.session.email;
-        const customer = await customerModel.findEmail(email);
+        try {
+            const email = req.session.email;
+            const customer = await customerModel.findEmail(email);
 
-        // update thông tin customer
-        customer.shipping_name = req.body.fullname;
-        customer.shipping_mobile = req.body.mobile;
-        customer.housenumber_street = req.body.address;
-        customer.ward_id = req.body.ward;
+            // Assign fields, handling undefined values
+            customer.shipping_name = req.body.fullname || null;
+            customer.shipping_mobile = req.body.mobile || null;
+            customer.housenumber_street = req.body.address || null;
+            customer.ward_id = req.body.ward || null;
 
-        // lưu customer lại database
-        await customer.update();
+            // Prepare sanitized data for update
+            const sanitizedData = {
+                shipping_name: customer.shipping_name,
+                shipping_mobile: customer.shipping_mobile,
+                housenumber_street: customer.housenumber_street,
+                ward_id: customer.ward_id,
+            };
 
-        // message
-        req.session.message_success = 'Đã cập nhật địa chỉ giao hàng mặc định thành công';
-        req.session.save(() => res.redirect('/dia-chi-giao-hang-mac-dinh.html'));
-    }
+            // Check if there are any valid fields to update
+            const hasValidFields = Object.values(sanitizedData).some((value) => value !== null);
+            if (!hasValidFields) {
+                throw new Error('No fields to update. Ensure the data object contains valid fields.');
+            }
+
+            // Perform the update
+            await customer.update(customer.id, sanitizedData);
+
+            req.session.message_success = 'Đã cập nhật địa chỉ giao hàng mặc định thành công';
+            req.session.save(() => res.redirect('/dia-chi-giao-hang-mac-dinh.html'));
+        } catch (error) {
+            console.error('Error updating shipping default:', error.message);
+            req.session.message_error = 'Đã xảy ra lỗi khi cập nhật địa chỉ.';
+            res.redirect('/dia-chi-giao-hang-mac-dinh.html');
+        }
+    };
 
     // trả về true nếu không tồn tại email
     // trả về false nếu tồn tại email
@@ -199,8 +216,6 @@ class CustomerController {
     // đăng ký tạo tài khoản mới
     static register = async (req, res) => {
         try {
-            console.log(req.body);
-            console.log(req.recaptcha);
             if (req.recaptcha.error) {
                 req.session.message_error = `Lỗi: ${req.recaptcha.error}`;
                 req.session.save(() => {
@@ -248,7 +263,6 @@ class CustomerController {
             <a href = "${linkActiveAccount}"> Active Account</a><br>
             Được gởi từ web ${web}.
             `;
-            console.log('Sending email to:', to);
 
             await req.app.locals.helpers.sendEmail(to, subject, content);
             req.session.message_success = `Đã tạo tài khoản thành công, vui lòng vào ${email} để kích hoạt tài khoản.`;
@@ -263,27 +277,33 @@ class CustomerController {
     }
 
     // kích hoạt tài khoản
-    // kích hoạt tài khoản
     static active = async (req, res) => {
         try {
             const token = req.params.token;
             const privateKey = process.env.JWT_KEY;
+
+            // Decode the JWT token
             const decoded = jwt.verify(token, privateKey);
             const email = decoded.email;
+
+            // Fetch the customer by email
             const customer = await customerModel.findEmail(email);
-            customer.is_active = 1;
-            await customer.update();
+
+            // Update the `is_active` field to activate the account
+            const data = { is_active: 1 }; // Prepare the data object
+            await customer.update(customer.id, data); // Pass the ID and data object to the update method
+
+            // Set success message and redirect
             req.session.message_success = `Đã kích hoạt tài khoản thành công`;
             req.session.save(() => {
                 res.redirect('/');
             });
+        } catch (error) {
+            // Log and handle the error
+            console.error('Error activating account:', error.message);
+            res.status(500).send(error.message);
         }
-        catch (error) {
-            // 500 là lỗi internal server (lỗi xãy ra ở server)
-            console.log(error);//dành cho dev xem
-            res.status(500).send(error.message);//cho người dùng xem
-        }
-    }
+    };
 
     static forgotpassword = async (req, res) => {
         try {
@@ -301,7 +321,6 @@ class CustomerController {
             Được gởi từ web ${web}.
             `;
             req.app.locals.helpers.sendEmail(to, subject, content);
-            console.log('ddd');
             req.session.message_success = `Vui lòng kiểm tra ${email} để tạo mới mật khẩu.`;
             req.session.save(() => {
                 res.redirect('/');
@@ -336,27 +355,35 @@ class CustomerController {
         try {
             const token = req.body.token;
             const privateKey = process.env.JWT_KEY;
+
+            // Decode the JWT token
             const decoded = jwt.verify(token, privateKey);
             const email = decoded.email;
+
+            // Fetch the customer by email
             const customer = await customerModel.findEmail(email);
 
+            // Hash the new password
             const saltRounds = 10;
             const salt = bcrypt.genSaltSync(saltRounds);
             const hash = bcrypt.hashSync(req.body.password, salt);
-            customer.password = hash;
 
-            await customer.update();
+            // Update the customer's password
+            const data = { password: hash }; // Prepare the data object
+            await customer.update(customer.id, data); // Pass the ID and data object to the update method
+
+            // Success message
             req.session.message_success = `Đã tạo mới mật khẩu thành công.`;
             req.session.save(() => {
                 res.redirect('/');
             });
+        } catch (error) {
+            // Log and handle the error
+            console.error('Error updating password:', error.message);
+            res.status(500).send(error.message);
         }
-        catch (error) {
-            // 500 là lỗi internal server (lỗi xãy ra ở server)
-            console.log(error);//dành cho dev xem
-            res.status(500).send(error.message);//cho người dùng xem
-        }
-    }
+    };
+
 }
 
 module.exports = CustomerController;

@@ -12,6 +12,9 @@ const AdminStaffController = require('../controllers/admin/AdminStaffController'
 const AdminStatusController = require('../controllers/admin/AdminStatusController');
 const AdminActionController = require('../controllers/admin/AdminActionController');
 const AdminTransportController = require('../controllers/admin/AdminTransportController');
+const AdminChatbotController = require('../controllers/admin/AdminChatbotController');
+const { showChatHistory } = require("../controllers/admin/AdminChatbotController");
+
 
 function checkLogin(req, res, next) {
     if (req.path == '/login.html' || req.path == '/processLogin') {
@@ -121,6 +124,13 @@ router.get('/status/edit/:id', checkPermission('edit_status'), AdminStatusContro
 router.get('/transport', checkPermission('view_transport'), AdminTransportController.index);
 router.get('/transport/edit/:id', checkPermission('edit_transport'), AdminTransportController.edit);
 
+//Revenue routes
+router.get('/revenue', checkPermission('view_revenue'), AdminOrderController.revenue);
+router.get('/revenue/export/excel', checkPermission('view_revenue'), AdminOrderController.exportExcel);
+router.get('/revenue/chart-data', checkPermission('view_revenue'), AdminOrderController.chartData);
+
+router.get('/chatbot/logs', checkPermission('view_comment'), AdminChatbotController.getChatLogs);
+
 router.post('/action/update', checkPermission('edit_permission'), AdminActionController.update);
 router.post('/processLogin', AdminAuthController.processLogin);
 router.post('/brand/store', checkPermission('add_brand'), AdminBrandController.store);
@@ -139,5 +149,6 @@ router.post('/status/store', checkPermission('add_status'), AdminStatusControlle
 router.post('/status/update', checkPermission('edit_status'), AdminStatusController.update);
 router.post('/store', checkPermission('add_product'), AdminProductController.store);
 router.post('/transport/update', checkPermission('edit_transport'), AdminTransportController.update);
+router.post('/chatbot', AdminChatbotController.respond);
 
 module.exports = router;

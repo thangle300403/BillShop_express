@@ -7,6 +7,10 @@ const commentModel = require('../../models/Comment');
 const imageItemModel = require('../../models/ImageItem');
 const path = require('path');
 const { features } = require('process');
+const fs = require('fs');
+const { pipeline } = require('stream');
+const util = require('util');
+const pipelineAsync = util.promisify(pipeline);
 // Go up two levels from the current directory
 class AdminProductController {
     //trả về view -> (req, res)
@@ -116,9 +120,13 @@ class AdminProductController {
         }
     }
 
-    static update = async (req, res) => {
+
+    static async update(req, res) {
         try {
+            // Parse the form data
             const { fields, files } = await req.app.locals.helpers.parseForm(req);
+
+            // Prepare data object for updating
             const data = {
                 barcode: fields.barcode[0],
                 sku: fields.sku[0],
@@ -133,25 +141,40 @@ class AdminProductController {
                 description: fields.description[0],
                 featured: fields.featured[0],
             };
-            // If a new image is uploaded, handle the image upload and update the featured_image field
-            if (files.img && files.img.length > 0) {
+
+            // Handle optional image upload
+            if (files.img && files.img.length > 0 && files.img[0].originalFilename) {
                 const oldpath = files.img[0].filepath;
                 const newpath = req.app.locals.uploadDir + '/' + files.img[0].originalFilename;
-                await req.app.locals.helpers.copyFile(oldpath, newpath);
-                data.featured_image = files.img[0].originalFilename;
+
+                try {
+                    // Copy the file to the new location
+                    await req.app.locals.helpers.copyFile(oldpath, newpath);
+                    // Update the `featured_image` field only if a new image is uploaded
+                    data.featured_image = files.img[0].originalFilename;
+                } catch (err) {
+                    throw new Error(`Error copying file: ${err.message}`);
+                }
             }
 
+            // Perform the database update
             await productModel.update(fields.id[0], data);
 
-            // Update session message for success
+            // Set success message and redirect
             req.session.message_success = `Sửa thông tin sản phẩm ${data.name} thành công!`;
             req.session.save(() => {
                 res.redirect('/admin');
             });
         } catch (error) {
-            throw new Error(error.message);
+            // Log and handle errors
+            console.error('Error updating product:', error.message);
+            req.session.message_error = `Có lỗi xảy ra: ${error.message}`;
+            req.session.save(() => {
+                res.redirect('/admin');
+            });
         }
-    };
+    }
+
 
     static destroy = async (req, res) => {
         try {

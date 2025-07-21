@@ -26,7 +26,6 @@ class District extends Base {
     getByProvinceId = async (province_id) => {
         const districts = await this.fetch(`province_id=${province_id}`);
         return districts;
-
     }
 }
 module.exports = new District();

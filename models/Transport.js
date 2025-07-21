@@ -80,7 +80,7 @@ class Transport extends Base {
     };
 
 
-    findProvince = async (provinceId) => {
+    findProvinceById = async (provinceId) => {
         const query = `SELECT * FROM province WHERE id = ?`;
         const [rows] = await pool.execute(query, [provinceId]);
         return rows.length ? rows[0] : null; // Return the first province object or null if not found

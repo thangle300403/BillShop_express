@@ -1,5 +1,6 @@
 const session = require('express-session');
 const commentModel = require('../../models/Comment');
+const chatbotAdminModel = require("../../models/ChatbotAdmin");
 
 class AdminCommentController {
     //trả về view -> (req, res)
@@ -24,7 +25,6 @@ class AdminCommentController {
             const allComments = await commentModel.getBy(conds, sorts);
 
             const totalPage = Math.ceil(allComments.length / item_per_page); //để phân trag
-
 
             res.render('admin/comment/index', {
                 comments: comments,

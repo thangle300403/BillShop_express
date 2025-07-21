@@ -25,7 +25,7 @@ class AdminTransportController {
             const totalPage = Math.ceil(allTransports.length / item_per_page); //để phân trag
 
             for (let transport of transports) {
-                const province = await transportModel.findProvince(transport.province_id);
+                const province = await transportModel.findProvinceById(transport.province_id);
                 transport.province = { name: province.name };
             }
 
